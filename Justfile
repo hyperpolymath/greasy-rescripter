@@ -455,3 +455,28 @@ todos:
 # Open in editor
 edit:
     ${EDITOR:-code} .
+
+# justfile
+set shell := ["bash", "-c"]
+
+# Build the final .user.js
+bundle: build-res export
+    @mkdir -p dist
+    @cat .temp_header.txt src/Main.bs.js > dist/script.user.js
+    @rm .temp_header.txt
+    @echo "Build complete: ./dist/script.user.js"
+
+# Compile ReScript logic
+build-res:
+    rescript build
+
+# Generate the Greasemonkey header block from Nickel
+export:
+    @echo "// ==UserScript==" > .temp_header.txt
+    @nickel export config/metadata.ncl --format json | jq -r '.header | to_entries | .[] | "// @\(.key) \(.value | if type == "array" then join("\n// @\(.key) ") else . end)"' >> .temp_header.txt
+    @echo "// ==/UserScript==" >> .temp_header.txt
+
+# Initialise project
+strike:
+    @echo "Initialising greasy-rescripter v0.1.0-alpha..."
+    npm install
